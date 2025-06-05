@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédicteur de Maladies des Plantes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .upload-area {
+            border: 2px dashed #4CAF50;
+            border-radius: 12px;
+            padding: 40px 20px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #45a049;
+            background: #f0f8f0;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .preview-section {
+            display: none;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-preview {
+            max-width: 250px;
+            max-height: 250px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin: 0 auto 15px;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .result-main {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-icon {
+            font-size: 2.5em;
+            margin-right: 15px;
+        }
+
+        .result-text h3 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .confidence {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .top-results h4 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            margin: 15px 0;
+        }
+
+        .file-info {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .reset-btn {
+            background: #f44336;
+        }
+
+        .reset-btn:hover {
+            background: #da190b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 25px 15px;
+            }
+
+            .result-main {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .result-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Diagnostic de Maladies des Plantes</h1>
+            <p>Analysez la santé de vos plantes grâce à l'IA</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Cliquez pour sélectionner une image</div>
+                    <div class="upload-subtext">ou glissez-déposez votre image ici</div>
+                    <div class="upload-subtext">JPG, JPEG, PNG (max 16MB)</div>
+                </div>
+                <input type="file" id="file-input" accept=".jpg,.jpeg,.png">
+                <button class="btn" id="predict-btn" disabled>Analyser l'image</button>
+                <button class="btn reset-btn" id="reset-btn" style="display: none;">Nouvelle analyse</button>
+            </div>
+
+            <div class="preview-section" id="preview-section">
+                <img id="image-preview" class="image-preview" alt="Aperçu">
+                <div class="file-info" id="file-info"></div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyse en cours...</p>
+            </div>
+
+            <div class="error" id="error-message"></div>
+
+            <div class="results-section" id="results-section">
+                <div class="result-card">
+                    <div class="result-main">
+                        <div class="result-icon" id="result-icon">🔍</div>
+                        <div class="result-text">
+                            <h3 id="result-diagnosis">Diagnostic</h3>
+                            <div class="confidence" id="result-confidence">Confiance: --</div>
+                        </div>
+                    </div>
+                    <div class="success" id="analysis-time" style="display: none;">
+                        ⏱️ Analyse en <span id="time-taken">--</span>s
+                    </div>
+                </div>
+
+                <div class="top-results">
+                    <h4>🏆 Top 5 des prédictions</h4>
+                    <div id="top-results-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cache des éléments DOM
+        const elements = {
+            uploadArea: document.getElementById('upload-area'),
+            fileInput: document.getElementById('file-input'),
+            predictBtn: document.getElementById('predict-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            previewSection: document.getElementById('preview-section'),
+            imagePreview: document.getElementById('image-preview'),
+            fileInfo: document.getElementById('file-info'),
+            loading: document.getElementById('loading'),
+            errorMessage: document.getElementById('error-message'),
+            resultsSection: document.getElementById('results-section')
+        };
+        
+        let selectedFile = null;
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        const maxSize = 16 * 1024 * 1024; // 16MB
+
+        // Event listeners
+        elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
+        elements.uploadArea.addEventListener('dragover', handleDragOver);
+        elements.uploadArea.addEventListener('dragleave', handleDragLeave);
+        elements.uploadArea.addEventListener('drop', handleDrop);
+        elements.fileInput.addEventListener('change', handleFileSelect);
+        elements.predictBtn.addEventListener('click', handlePredict);
+        elements.resetBtn.addEventListener('click', handleReset);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            elements.uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave() {
+            elements.uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            // Validation rapide
+            if (!allowedTypes.includes(file.type)) {
+                showError('Format non autorisé. Utilisez JPG, JPEG ou PNG.');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                showError('Fichier trop volumineux (max 16MB).');
+                return;
+            }
+
+            selectedFile = file;
+            showPreview(file);
+            elements.predictBtn.disabled = false;
+            hideError();
+        }
+
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                elements.imagePreview.src = e.target.result;
+                elements.previewSection.style.display = 'block';
+                
+                elements.fileInfo.innerHTML = `
+                    <strong>📄 Fichier:</strong> ${file.name}<br>
+                    <strong>📏 Taille:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                    <strong>🎨 Type:</strong> ${file.type}
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handlePredict() {
+            if (!selectedFile) return;
+
+            showLoading();
+            hideError();
+            hideResults();
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    showResults(result);
+                    elements.resetBtn.style.display = 'inline-block';
+                } else {
+                    showError(result.error || 'Erreur lors de l\'analyse');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Erreur de connexion: ' + error.message);
+            }
+        }
+
+        function handleReset() {
+            selectedFile = null;
+            elements.fileInput.value = '';
+            elements.previewSection.style.display = 'none';
+            hideResults();
+            hideError();
+            elements.predictBtn.disabled = true;
+            elements.resetBtn.style.display = 'none';
+        }
+
+        function showResults(result) {
+            const resultIcon = document.getElementById('result-icon');
+            const diagnosis = result.prediction;
+            
+            resultIcon.textContent = diagnosis === 'Plante saine' ? '✅' : '⚠️';
+            document.getElementById('result-diagnosis').textContent = diagnosis;
+            document.getElementById('result-confidence').textContent = `Confiance: ${result.confidence}%`;
+            document.getElementById('time-taken').textContent = result.time_taken;
+            document.getElementById('analysis-time').style.display = 'block';
+
+            // Top 5 results
+            const topResultsList = document.getElementById('top-results-list');
+            const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+            
+            topResultsList.innerHTML = result.top_results.map((item, index) => `
+                <div class="result-item">
+                    <span class="result-name">${medals[index]} ${item.class}</span>
+                    <span class="result-confidence">${item.confidence}%</span>
+                </div>
+            `).join('');
+
+            elements.resultsSection.style.display = 'block';
+        }
+
+        function showLoading() {
+            elements.loading.style.display = 'block';
+            elements.predictBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            elements.loading.style.display = 'none';
+            elements.predictBtn.disabled = false;
+        }
+
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            elements.errorMessage.style.display = 'none';
+        }
+
+        function hideResults() {
+            elements.resultsSection.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
